@@ -1,0 +1,64 @@
+.nutrition-breakdown {
+  padding: 20px;
+  background: var(--tg-theme-secondary-bg-color, #f7f7f7);
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.nutrition-breakdown h3 {
+  font-size: 18px;
+  margin: 0 0 16px 0;
+}
+
+.macros-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.macro-card {
+  background: var(--tg-theme-bg-color, #fff);
+  padding: 16px 12px;
+  border-radius: 10px;
+  transition: transform 0.2s ease;
+}
+
+.macro-card:active {
+  transform: scale(0.98);
+}
+
+.macro-icon {
+  font-size: 28px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.macro-content {
+  text-align: center;
+}
+
+.macro-label {
+  font-size: 12px;
+  color: var(--tg-theme-hint-color, #999);
+  margin-bottom: 4px;
+}
+
+.macro-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--tg-theme-text-color, #000);
+  margin-bottom: 8px;
+}
+
+.macro-bar {
+  height: 4px;
+  background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.macro-bar-fill {
+  height: 100%;
+  transition: width 0.5s ease;
+  border-radius: 2px;
+}

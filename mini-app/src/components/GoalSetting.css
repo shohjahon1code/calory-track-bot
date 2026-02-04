@@ -1,0 +1,97 @@
+.goal-setting {
+  padding: 20px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.goal-setting h2 {
+  font-size: 24px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.subtitle {
+  text-align: center;
+  color: var(--tg-theme-hint-color, #999);
+  margin-bottom: 24px;
+}
+
+.presets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.preset-btn {
+  padding: 12px;
+  border: 2px solid var(--tg-theme-button-color, #3390ec);
+  background: transparent;
+  color: var(--tg-theme-button-color, #3390ec);
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.preset-btn:hover {
+  opacity: 0.8;
+}
+
+.preset-btn.active {
+  background: var(--tg-theme-button-color, #3390ec);
+  color: var(--tg-theme-button-text-color, #fff);
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.goal-input {
+  flex: 1;
+  padding: 14px;
+  font-size: 18px;
+  border: 2px solid var(--tg-theme-secondary-bg-color, #f0f0f0);
+  border-radius: 8px;
+  background: var(--tg-theme-bg-color, #fff);
+  color: var(--tg-theme-text-color, #000);
+}
+
+.unit {
+  font-size: 14px;
+  color: var(--tg-theme-hint-color, #999);
+  font-weight: 500;
+}
+
+.error {
+  color: #ff3b30;
+  font-size: 14px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--tg-theme-button-color, #3390ec);
+  color: var(--tg-theme-button-text-color, #fff);
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.submit-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

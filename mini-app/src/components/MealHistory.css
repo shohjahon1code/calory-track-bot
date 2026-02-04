@@ -1,0 +1,100 @@
+.meal-history {
+  padding: 20px;
+}
+
+.meal-history h3 {
+  font-size: 18px;
+  margin: 0 0 16px 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--tg-theme-secondary-bg-color, #f7f7f7);
+  border-radius: 12px;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.empty-state p {
+  margin: 8px 0;
+  color: var(--tg-theme-text-color, #000);
+}
+
+.empty-hint {
+  font-size: 14px;
+  color: var(--tg-theme-hint-color, #999) !important;
+}
+
+.meals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.meal-item {
+  background: var(--tg-theme-secondary-bg-color, #f7f7f7);
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.meal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.meal-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--tg-theme-text-color, #000);
+}
+
+.meal-time {
+  font-size: 14px;
+  color: var(--tg-theme-hint-color, #999);
+}
+
+.meal-nutrition {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.nutrition-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.nutrition-item .label {
+  color: var(--tg-theme-hint-color, #666);
+}
+
+.nutrition-item .value {
+  font-weight: 600;
+  color: var(--tg-theme-text-color, #000);
+}
+
+.delete-btn {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  color: #ff3b30;
+  border: 1px solid #ff3b30;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.delete-btn:active {
+  background: #ff3b30;
+  color: white;
+}

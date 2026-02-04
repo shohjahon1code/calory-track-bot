@@ -1,0 +1,82 @@
+{
+  "common": {
+    "loading": "Yuklanmoqda...",
+    "error": "Xatolik",
+    "save": "Saqlash",
+    "cancel": "Bekor qilish",
+    "back": "Orqaga",
+    "comingSoon": "Tez orada"
+  },
+  "nav": {
+    "home": "Bosh sahifa",
+    "stats": "Statistika",
+    "profile": "Profil"
+  },
+  "home": {
+    "hello": "Salom",
+    "today": "Bugun",
+    "remaining": "Qoldi",
+    "eaten": "Yeyildi",
+    "burned": "Sarflandi",
+    "protein": "Protein",
+    "carbs": "Uglevod",
+    "fats": "Yog'",
+    "recentMeals": "Oxirgi ovqatlar",
+    "noMeals": "Bugun ovqat kiritilmadi",
+    "viewHistory": "Tarixni ko'rish",
+    "letsCrushIt": "KELING, BUGUNNI YONDIRAMIZ!",
+    "goal": "Maqsad"
+  },
+  "stats": {
+    "title": "Sizning natijalaringiz",
+    "weekly": "Haftalik trend",
+    "weight": "Vazn",
+    "calories": "Kaloriya",
+    "logWeight": "Vazn kiritish",
+    "currentWeight": "Joriy vazn",
+    "forecast": "Prognoz",
+    "daysToGo": "kun qoldi",
+    "avgIntake": "O'rtacha iste'mol",
+    "topSources": "Asosiy manbalar",
+    "aiAnalysis": "AI Tahlili",
+    "logHistory": "Tarix",
+    "keepLogging": "Prognoz uchun ma'lumot kiriting",
+    "stable": "Barqaror"
+  },
+  "profile": {
+    "title": "Profil va Sozlamalar",
+    "personalInfo": "Shaxsiy ma'lumotlar",
+    "dailyGoal": "Kunlik maqsad",
+    "language": "Til",
+    "units": "Birliklar",
+    "notifications": "Bildirishnomalar",
+    "support": "Qo'llab-quvvatlash",
+    "logout": "Chiqish",
+    "deleteAccount": "Hisobni o'chirish"
+  },
+  "premium": {
+    "title": "To'lovlar va Rejalar",
+    "manage": "Obunani boshqarish",
+    "balance": "Balans",
+    "freePlan": "Bepul Reja",
+    "proActive": "PRO Faol",
+    "upgrade": "PRO ga o'tish",
+    "contactSupport": "Admin bilan bog'lanish",
+    "plans": "Rejalar",
+    "contact": "Aloqa",
+    "features": {
+      "unlimited": "Cheklovsiz Skanerlash",
+      "insights": "Sun'iy Intellekt Tahlili",
+      "noAds": "Reklamasiz",
+      "support": "Tezkor Yordam"
+    }
+  },
+  "wizard": {
+    "welcome": "Oshpaz AI ga xush kelibsiz",
+    "step1": "Keling, tanishamiz",
+    "gender": "Jinsi",
+    "male": "Erkak",
+    "female": "Ayol",
+    "next": "Keyingisi"
+  }
+}

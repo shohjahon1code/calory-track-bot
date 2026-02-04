@@ -1,0 +1,85 @@
+.progress-bar-container {
+  padding: 20px;
+  background: var(--tg-theme-secondary-bg-color, #f7f7f7);
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.progress-header {
+  margin-bottom: 16px;
+}
+
+.progress-header h3 {
+  font-size: 18px;
+  margin: 0 0 12px 0;
+}
+
+.progress-numbers {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.progress-numbers .current {
+  font-size: 32px;
+  color: var(--tg-theme-text-color, #000);
+}
+
+.progress-numbers .separator {
+  font-size: 24px;
+  color: var(--tg-theme-hint-color, #999);
+}
+
+.progress-numbers .goal {
+  font-size: 24px;
+  color: var(--tg-theme-hint-color, #999);
+}
+
+.progress-numbers .unit {
+  font-size: 16px;
+  color: var(--tg-theme-hint-color, #999);
+  margin-left: 4px;
+}
+
+.progress-bar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.progress-bar-bg {
+  flex: 1;
+  height: 12px;
+  background: var(--tg-theme-bg-color, #fff);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  transition: width 0.5s ease, background-color 0.3s ease;
+  border-radius: 6px;
+}
+
+.progress-percentage {
+  font-size: 16px;
+  font-weight: 700;
+  min-width: 50px;
+  text-align: right;
+}
+
+.progress-footer {
+  font-size: 14px;
+  text-align: center;
+}
+
+.remaining {
+  color: var(--tg-theme-hint-color, #666);
+}
+
+.exceeded {
+  color: #ff3b30;
+  font-weight: 600;
+}

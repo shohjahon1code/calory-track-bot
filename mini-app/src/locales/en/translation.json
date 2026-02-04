@@ -1,0 +1,82 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "comingSoon": "Coming Soon"
+  },
+  "nav": {
+    "home": "Home",
+    "stats": "Stats",
+    "profile": "Profile"
+  },
+  "home": {
+    "hello": "Hello",
+    "today": "Today",
+    "remaining": "Remaining",
+    "eaten": "Eaten",
+    "burned": "Burned",
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fats": "Fats",
+    "recentMeals": "Recent Meals",
+    "noMeals": "No meals logged today",
+    "viewHistory": "View History",
+    "letsCrushIt": "LET'S CRUSH IT TODAY!",
+    "goal": "Goal"
+  },
+  "stats": {
+    "title": "Your Progress",
+    "weekly": "Weekly Trend",
+    "weight": "Weight",
+    "calories": "Calories",
+    "logWeight": "Log Weight",
+    "currentWeight": "Current Weight",
+    "forecast": "Forecast",
+    "daysToGo": "days to go",
+    "avgIntake": "Avg Intake",
+    "topSources": "Top Sources",
+    "aiAnalysis": "AI Analysis",
+    "logHistory": "Log History",
+    "keepLogging": "Keep logging to see predictions",
+    "stable": "Stable"
+  },
+  "profile": {
+    "title": "Profile & Settings",
+    "personalInfo": "Personal Info",
+    "dailyGoal": "Daily Goal",
+    "language": "Language",
+    "units": "Units",
+    "notifications": "Notifications",
+    "support": "Support",
+    "logout": "Logout",
+    "deleteAccount": "Delete Account"
+  },
+  "premium": {
+    "title": "Billing & Plans",
+    "manage": "Manage your subscription",
+    "balance": "Balance",
+    "freePlan": "Free Plan",
+    "proActive": "PRO Active",
+    "upgrade": "Upgrade to PRO",
+    "contactSupport": "Contact Admin",
+    "plans": "Plans",
+    "contact": "Contact",
+    "features": {
+      "unlimited": "Unlimited Scans",
+      "insights": "AI Insights",
+      "noAds": "No Ads",
+      "support": "Priority Support"
+    }
+  },
+  "wizard": {
+    "welcome": "Welcome to Oshpaz AI",
+    "step1": "Let's get to know you",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "next": "Next"
+  }
+}
