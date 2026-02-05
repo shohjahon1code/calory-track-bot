@@ -71,6 +71,15 @@ const userSchema = new Schema<IUserDocument>(
     targetWeight: {
       type: Number,
     },
+    language: {
+      type: String,
+      enum: ["uz", "en"],
+      default: "uz",
+    },
+    workType: {
+      type: String,
+      enum: ["office", "physical", "student", "homemaker", "freelance"],
+    },
     registrationDate: {
       type: Date,
       default: Date.now,
@@ -81,6 +90,12 @@ const userSchema = new Schema<IUserDocument>(
       default: 0,
     },
     lastScanDate: {
+      type: Date,
+    },
+    lastProgressAnalysis: {
+      type: Schema.Types.Mixed,
+    },
+    lastAnalysisDate: {
       type: Date,
     },
   },

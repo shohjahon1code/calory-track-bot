@@ -8,37 +8,76 @@ import axios from "axios";
 
 const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN!);
 
-/**
- * Handle /start command
- */
-// ... (imports remain same)
-
-// ...
+const BOT_MESSAGES = {
+  uz: {
+    chooseLanguage: "Tilni tanlang / Choose your language:",
+    welcome: (name: string, goal: number) =>
+      `Assalomu alaykum, *${name || "do'stim"}*! 👋\n\n` +
+      `Men *Oshpaz AI* — sun'iy intellektli ovqat tahlilchisiman.\n\n` +
+      `Nima qila olaman:\n` +
+      `📸  Rasm yuboring — kaloriya va tarkibini aniqlayman\n` +
+      `🎤  Ovozli xabar — nima yegatingizni ayting, bas\n` +
+      `✍️  Matn yozing — "osh, salat, non" kabi\n\n` +
+      `━━━━━━━━━━━━━━━━━━\n` +
+      `🎯  Sizning maqsadingiz: *${goal} kkal/kun*\n` +
+      `━━━━━━━━━━━━━━━━━━\n\n` +
+      `Buyruqlar:\n` +
+      `/goal \`raqam\` — maqsadni o'zgartirish\n` +
+      `/stats — bugungi natijalar\n\n` +
+      `Boshlash uchun ovqat rasmini yuboring yoki pastdagi tugmani bosing 👇`,
+    openApp: "📊 Ilovani Ochish",
+  },
+  en: {
+    chooseLanguage: "Tilni tanlang / Choose your language:",
+    welcome: (name: string, goal: number) =>
+      `Hello, *${name || "friend"}*! 👋\n\n` +
+      `I'm *Oshpaz AI* — your AI-powered food analyzer.\n\n` +
+      `What I can do:\n` +
+      `📸  Send a photo — I'll analyze calories and nutrients\n` +
+      `🎤  Voice message — just tell me what you ate\n` +
+      `✍️  Text — type "rice, salad, bread" etc.\n\n` +
+      `━━━━━━━━━━━━━━━━━━\n` +
+      `🎯  Your goal: *${goal} kcal/day*\n` +
+      `━━━━━━━━━━━━━━━━━━\n\n` +
+      `Commands:\n` +
+      `/goal \`number\` — change your goal\n` +
+      `/stats — today's results\n\n` +
+      `Send a food photo or tap the button below to start 👇`,
+    openApp: "📊 Open App",
+  },
+};
 
 /**
  * Handle /start command
  */
 bot.command("start", async (ctx: Context) => {
   try {
-    const user = await userService.findOrCreate(ctx.from!);
+    const tgId = ctx.from!.id.toString();
+    const existingUser = await userService.getByTgId(tgId);
 
-    const keyboard = new InlineKeyboard().webApp(
-      "📊 Ilovani Ochish",
-      process.env.MINI_APP_URL!,
-    );
+    if (existingUser && existingUser.language) {
+      // Returning user — show welcome in their language
+      const lang = existingUser.language as "uz" | "en";
+      const msgs = BOT_MESSAGES[lang];
+      const keyboard = new InlineKeyboard().webApp(
+        msgs.openApp,
+        process.env.MINI_APP_URL!,
+      );
+      await ctx.reply(msgs.welcome(existingUser.firstName, existingUser.dailyGoal), {
+        reply_markup: keyboard,
+        parse_mode: "Markdown",
+      });
+      return;
+    }
 
-    await ctx.reply(
-      `${SUCCESS_MESSAGES.WELCOME}\n\n` +
-        `Men sizning shaxsiy kaloriya hisoblagichingizman! 🥗\n\n` +
-        `📸 Ovqat rasmini yuboring va men uni tahlil qilaman\n` +
-        `📊 Kunlik kaloriya va makrolarni kuzatib boring\n` +
-        `🎯 Hozirgi maqsad: ${user.dailyGoal} kkal/kun\n\n` +
-        `Komandalar:\n` +
-        `/goal <raqam> - Kunlik kaloriya maqsadini o'zgartirish\n` +
-        `/stats - Bugungi statistika\n\n` +
-        `👇 Natijalarni ko'rish uchun ilovani oching!`,
-      { reply_markup: keyboard },
-    );
+    // New user — show language selection
+    const langKeyboard = new InlineKeyboard()
+      .text("🇺🇿 O'zbekcha", "lang:uz")
+      .text("🇬🇧 English", "lang:en");
+
+    await ctx.reply(BOT_MESSAGES.uz.chooseLanguage, {
+      reply_markup: langKeyboard,
+    });
   } catch (error) {
     console.error("Error in start command:", error);
     await ctx.reply("⚠️ Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
@@ -217,6 +256,31 @@ bot.command("stats", async (ctx: Context) => {
 // Callback query handler
 bot.on("callback_query:data", async (ctx) => {
   const data = ctx.callbackQuery.data;
+
+  // Language selection callback
+  if (data.startsWith("lang:")) {
+    const lang = data.split(":")[1] as "uz" | "en";
+    try {
+      const user = await userService.findOrCreate(ctx.from!, lang);
+      await userService.updateLanguage(ctx.from!.id.toString(), lang);
+
+      const msgs = BOT_MESSAGES[lang];
+      const keyboard = new InlineKeyboard().webApp(
+        msgs.openApp,
+        process.env.MINI_APP_URL!,
+      );
+
+      await ctx.editMessageText(msgs.welcome(user.firstName, user.dailyGoal), {
+        reply_markup: keyboard,
+        parse_mode: "Markdown",
+      });
+      await ctx.answerCallbackQuery();
+    } catch (error) {
+      console.error("Error in language selection:", error);
+      await ctx.answerCallbackQuery("⚠️ Xatolik yuz berdi");
+    }
+    return;
+  }
 
   if (data.startsWith("confirm_meal:")) {
     const mealId = data.split(":")[1];

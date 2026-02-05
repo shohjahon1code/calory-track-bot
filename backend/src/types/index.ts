@@ -16,9 +16,30 @@ export interface IUser {
   activityLevel?: "sedentary" | "light" | "moderate" | "active" | "very_active";
   goal?: "lose_weight" | "maintain" | "gain_muscle";
   targetWeight?: number; // kg
+  language?: "uz" | "en";
+  workType?: "office" | "physical" | "student" | "homemaker" | "freelance";
   registrationDate: Date;
   photoScanCount: number;
   lastScanDate?: Date;
+  lastProgressAnalysis?: AIProgressAnalysis;
+  lastAnalysisDate?: Date;
+}
+
+export interface AIProgressAnalysis {
+  estimatedWeeks: number;
+  estimatedDate: string;
+  weeklyRateRecommendation: number;
+  dailyCalorieTarget: number;
+  deficitOrSurplus: number;
+  milestones: {
+    percentage: number;
+    targetWeight: number;
+    estimatedDate: string;
+  }[];
+  recommendations: string[];
+  weeklyPlan: string;
+  motivationalMessage: string;
+  riskWarnings: string[];
 }
 
 export interface IWallet {

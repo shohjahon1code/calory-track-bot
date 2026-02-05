@@ -132,6 +132,38 @@ Rules:
     }
   }
 
+  /**
+   * Analyze user progress for AI-powered predictions
+   */
+  async analyzeProgress(
+    systemPrompt: string,
+    userPrompt: string,
+  ): Promise<{ success: boolean; data?: any; error?: string }> {
+    try {
+      const response = await this.client.chat.completions.create({
+        model: OPENAI_CONFIG.MODEL,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        max_tokens: 1000,
+        temperature: 0.4,
+        response_format: { type: "json_object" },
+      });
+
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        return { success: false, error: "No response from AI" };
+      }
+
+      const data = JSON.parse(content);
+      return { success: true, data };
+    } catch (error) {
+      console.error("OpenAI Progress Analysis Error:", error);
+      return { success: false, error: ERROR_MESSAGES.OPENAI_ERROR };
+    }
+  }
+
   private processResponse(response: any): OpenAIAnalysisResult {
     const content = response.choices[0]?.message?.content;
 

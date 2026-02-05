@@ -10,7 +10,7 @@ class UserService {
   /**
    * Find or create user from Telegram user info
    */
-  async findOrCreate(telegramUser: TelegramUserInfo): Promise<IUserDocument> {
+  async findOrCreate(telegramUser: TelegramUserInfo, language?: "uz" | "en"): Promise<IUserDocument> {
     try {
       const tgId = telegramUser.id.toString();
 
@@ -22,6 +22,7 @@ class UserService {
           firstName: telegramUser.first_name || "",
           lastName: telegramUser.last_name || "",
           username: telegramUser.username || "",
+          language: language || "uz",
         });
         console.log(`✅ New user created: ${tgId}`);
       }
@@ -36,6 +37,18 @@ class UserService {
   /**
    * Get user by Telegram ID
    */
+  async updateLanguage(tgId: string, language: "uz" | "en"): Promise<IUserDocument | null> {
+    try {
+      const user = await User.findOne({ tgId });
+      if (!user) return null;
+      user.language = language;
+      return await user.save();
+    } catch (error) {
+      console.error("Error in updateLanguage:", error);
+      throw new Error(ERROR_MESSAGES.DATABASE_ERROR);
+    }
+  }
+
   async getByTgId(tgId: string): Promise<IUserDocument | null> {
     try {
       return await User.findOne({ tgId });
@@ -132,6 +145,8 @@ class UserService {
       if (profileData.targetWeight)
         user.targetWeight = profileData.targetWeight;
       if (profileData.units) user.units = profileData.units;
+      if (profileData.language) user.language = profileData.language;
+      if (profileData.workType) user.workType = profileData.workType;
 
       // Recalculate daily goal if all required fields are present
       if (
