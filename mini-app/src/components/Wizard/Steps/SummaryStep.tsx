@@ -2,6 +2,7 @@ import React from "react";
 import { User } from "../../../types";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 interface SummaryStepProps {
   data: Partial<User>;
@@ -16,6 +17,8 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
   onConfirm,
   onBack,
 }) => {
+  const { t } = useTranslation();
+
   const calculateEstimate = () => {
     if (
       !data.weight ||
@@ -66,10 +69,9 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
       </button>
 
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-black text-slate-900">Final Plan</h2>
+        <h2 className="text-2xl font-black text-slate-900">{t("wizard.summary.title")}</h2>
       </div>
 
-      {/* Hero Result */}
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -79,37 +81,51 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl pointer-events-none -ml-10 -mb-10" />
 
         <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mb-1">
-          Target
+          {t("wizard.summary.goalLabel")}
         </p>
         <div className="text-5xl font-black text-white">{targetCalories}</div>
-        <p className="text-emerald-400 font-bold text-xs mt-1">kcal / day</p>
+        <p className="text-emerald-400 font-bold text-xs mt-1">{t("wizard.summary.caloriesPerDay")}</p>
       </motion.div>
 
-      {/* Breakdown */}
       <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 mb-6">
-        <SummaryRow label="Gender" value={data.gender} />
         <SummaryRow
-          label="Stats"
-          value={`${data.height}cm • ${data.weight}kg • ${data.age}yo`}
+          label={t("wizard.summary.gender")}
+          value={data.gender === "male" ? t("wizard.gender.male") : t("wizard.gender.female")}
         />
         <SummaryRow
-          label="Activity"
-          value={data.activityLevel?.replace("_", " ")}
+          label={t("wizard.summary.details")}
+          value={`${data.height} ${t("wizard.bodyStats.heightSuffix")} • ${data.weight} ${t("wizard.bodyStats.weightSuffix")} • ${data.age} ${t("wizard.bodyStats.ageSuffix")}`}
         />
-        <SummaryRow label="Goal" value={data.goal?.replace("_", " ")} />
+        {data.workType && (
+          <SummaryRow
+            label={t("wizard.summary.workType")}
+            value={t(`wizard.workType.${data.workType}`)}
+          />
+        )}
+        <SummaryRow
+          label={t("wizard.summary.activity")}
+          value={data.activityLevel ? t(`wizard.activity.${data.activityLevel}`) : ""}
+        />
+        <SummaryRow
+          label={t("wizard.summary.goalType")}
+          value={data.goal ? t(`wizard.goal.${data.goal}`) : ""}
+        />
       </div>
 
       <motion.button
-        whileTap={{ scale: 0.98 }}
+        whileTap={{ scale: 0.96 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
         onClick={onConfirm}
         disabled={loading}
         className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-bold text-lg shadow-xl shadow-emerald-200 flex items-center justify-center gap-2 mt-auto disabled:opacity-70 transition-all mb-8"
       >
         {loading ? (
-          "Saving..."
+          t("wizard.summary.saving")
         ) : (
           <>
-            Start Tracking <CheckCircle2 size={18} />
+            {t("wizard.summary.start")} <CheckCircle2 size={18} />
           </>
         )}
       </motion.button>

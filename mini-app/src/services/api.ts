@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { User, Meal, DailyStats } from "../types";
+import { User, Meal, DailyStats, AIProgressAnalysis } from "../types";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:3000/api";
@@ -133,6 +133,29 @@ class ApiService {
       balance: number;
       transactions: any[];
     }>(`/subscription/${tgId}`);
+    return response.data;
+  }
+
+  async getInitialAnalysis(
+    profileData: Partial<User>,
+    language: string,
+  ): Promise<AIProgressAnalysis> {
+    const response = await this.client.post<AIProgressAnalysis>(
+      "/user/initial-analysis",
+      { profileData, language },
+    );
+    return response.data;
+  }
+
+  async getProgressAnalysis(
+    tgId: string,
+    language: string,
+    refresh = false,
+  ): Promise<AIProgressAnalysis> {
+    const response = await this.client.post<AIProgressAnalysis>(
+      `/user/${tgId}/progress-analysis`,
+      { language, refresh },
+    );
     return response.data;
   }
 

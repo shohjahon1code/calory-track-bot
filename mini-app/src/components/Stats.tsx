@@ -29,8 +29,9 @@ import telegramService from "../utils/telegram";
 import apiService from "../services/api";
 import WeightModal from "./WeightModal";
 import LoadingSkeleton from "./LoadingSkeleton";
-import { Meal } from "../types";
+import { Meal, AIProgressAnalysis } from "../types";
 import { useTranslation } from "react-i18next";
+import i18n from "../i18n";
 
 const COLORS = ["#10B981", "#3B82F6", "#F59E0B", "#EF4444"];
 
@@ -54,6 +55,10 @@ const Stats: React.FC = () => {
   } | null>(null);
   const [predictionDays, setPredictionDays] = useState<number | null>(null);
   const [dailyAvgCalories, setDailyAvgCalories] = useState(0);
+  const [progressAnalysis, setProgressAnalysis] = useState<AIProgressAnalysis | null>(null);
+  const [refreshingAnalysis, setRefreshingAnalysis] = useState(false);
+  const [userGoal, setUserGoal] = useState<string>("");
+  const [startWeight, setStartWeight] = useState(0);
 
   const fetchStats = async () => {
     try {
@@ -71,6 +76,10 @@ const Stats: React.FC = () => {
 
       setTargetWeight(user.targetWeight || 65);
       setCurrentWeight(user.weight || 0);
+      setUserGoal(user.goal || "");
+      setStartWeight(
+        history.length > 0 ? history[0].weight : user.weight || 0,
+      );
 
       // Process Weight Data
       const data = processWeightData(history);
@@ -105,10 +114,32 @@ const Stats: React.FC = () => {
           )
         : 0;
       setDailyAvgCalories(avg);
+
+      // Fetch AI progress analysis (non-blocking)
+      try {
+        const analysis = await apiService.getProgressAnalysis(tgId, i18n.language);
+        setProgressAnalysis(analysis);
+      } catch {
+        // Analysis is optional
+      }
     } catch (error) {
       console.error("Error fetching stats:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefreshAnalysis = async () => {
+    setRefreshingAnalysis(true);
+    try {
+      const tgId = telegramService.getUserId();
+      if (!tgId) return;
+      const analysis = await apiService.getProgressAnalysis(tgId, i18n.language, true);
+      setProgressAnalysis(analysis);
+    } catch {
+      // Ignore
+    } finally {
+      setRefreshingAnalysis(false);
     }
   };
 
@@ -336,7 +367,16 @@ const Stats: React.FC = () => {
                 {t("stats.forecast")}
               </span>
               <div className="mt-2 h-16 flex flex-col justify-end">
-                {predictionDays ? (
+                {progressAnalysis && progressAnalysis.estimatedWeeks > 0 ? (
+                  <>
+                    <div className="text-3xl font-black text-indigo-600 leading-none">
+                      ~{progressAnalysis.estimatedWeeks}
+                    </div>
+                    <div className="text-xs font-medium text-slate-500">
+                      {t("aiAnalysis.weeks")} 🎯
+                    </div>
+                  </>
+                ) : predictionDays ? (
                   <>
                     <div className="text-3xl font-black text-indigo-600 leading-none">
                       {predictionDays}
@@ -377,6 +417,117 @@ const Stats: React.FC = () => {
             </div>
           </motion.div>
         </div>
+
+        {/* AI Progress Milestones */}
+        {progressAnalysis && progressAnalysis.milestones && progressAnalysis.milestones.length > 0 && userGoal !== "maintain" && (
+          <motion.div
+            variants={itemVariants}
+            className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-slate-800">
+                {t("aiAnalysis.progressToGoal")}
+              </h3>
+              <button
+                onClick={handleRefreshAnalysis}
+                disabled={refreshingAnalysis}
+                className="text-[10px] font-bold text-emerald-500 disabled:opacity-50"
+              >
+                {refreshingAnalysis ? "..." : t("aiAnalysis.refreshAnalysis")}
+              </button>
+            </div>
+
+            {/* Progress bar */}
+            {(() => {
+              const totalChange = Math.abs(startWeight - targetWeight);
+              const currentChange = Math.abs(startWeight - currentWeight);
+              const progressPercent = totalChange > 0 ? Math.min(100, (currentChange / totalChange) * 100) : 0;
+              return (
+                <div className="mb-4">
+                  <div className="flex justify-between text-[10px] text-slate-400 font-medium mb-1">
+                    <span>{startWeight} kg</span>
+                    <span>{targetWeight} kg</span>
+                  </div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-emerald-500 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPercent}%` }}
+                      transition={{ duration: 1 }}
+                    />
+                  </div>
+                  <div className="text-center mt-1">
+                    <span className="text-xs font-bold text-emerald-600">
+                      {Math.round(progressPercent)}%
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Milestones */}
+            <div className="space-y-2">
+              {progressAnalysis.milestones.map((m, i) => {
+                const reached = userGoal === "lose_weight"
+                  ? currentWeight <= m.targetWeight
+                  : currentWeight >= m.targetWeight;
+                return (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                      reached
+                        ? "bg-emerald-500 text-white"
+                        : "bg-slate-100 text-slate-400"
+                    }`}>
+                      {reached ? "✓" : `${m.percentage}%`}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-medium text-slate-600">{m.targetWeight} kg</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400">{m.estimatedDate}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
+        {/* AI Recommendations */}
+        {progressAnalysis && progressAnalysis.recommendations && progressAnalysis.recommendations.length > 0 && (
+          <motion.div
+            variants={itemVariants}
+            className="relative p-5 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-lg overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16 pointer-events-none" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles size={16} className="text-yellow-300" />
+                <h3 className="text-sm font-bold text-white/90">
+                  {t("aiAnalysis.recommendations")}
+                </h3>
+              </div>
+              <div className="space-y-2">
+                {progressAnalysis.recommendations.map((rec, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <div className="w-1 h-1 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+                    <p className="text-xs leading-relaxed text-indigo-100 font-medium">
+                      {rec}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              {progressAnalysis.weeklyPlan && (
+                <div className="mt-3 pt-3 border-t border-white/20">
+                  <p className="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-1">
+                    {t("aiAnalysis.weeklyPlan")}
+                  </p>
+                  <p className="text-xs text-indigo-100 leading-relaxed">
+                    {progressAnalysis.weeklyPlan}
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
 
         {/* Insights & Calorie Source */}
         <div className="grid grid-cols-1 gap-4">

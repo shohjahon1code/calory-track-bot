@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { User } from "../../../types";
 import { ChevronRight, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 interface ActivityGoalStepProps {
   activityLevel?: User["activityLevel"];
@@ -18,6 +19,7 @@ const ActivityGoalStep: React.FC<ActivityGoalStepProps> = ({
   onNext,
   onBack,
 }) => {
+  const { t } = useTranslation();
   const [activityLevel, setActivityLevel] = useState<
     User["activityLevel"] | undefined
   >(initialActivity);
@@ -40,7 +42,7 @@ const ActivityGoalStep: React.FC<ActivityGoalStepProps> = ({
 
   const Option = ({ selected, onClick, title, desc, icon }: any) => (
     <motion.div
-      whileTap={{ scale: 0.98 }}
+      whileTap={{ scale: 0.96 }}
       onClick={onClick}
       className={`p-3 rounded-xl border transition-all cursor-pointer ${
         selected
@@ -80,64 +82,64 @@ const ActivityGoalStep: React.FC<ActivityGoalStepProps> = ({
       <div className="flex-1 overflow-y-auto pb-20 scrollbar-hide">
         <div className="mb-4">
           <h2 className="text-xl font-extrabold text-slate-800">
-            Activity Level
+            {t("wizard.activity.title")}
           </h2>
-          <p className="text-xs text-slate-500">How much do you move?</p>
+          <p className="text-xs text-slate-500">{t("wizard.activity.subtitle")}</p>
         </div>
 
         <div className="grid grid-cols-1 gap-2 mb-6">
           <Option
             selected={activityLevel === "sedentary"}
             onClick={() => setActivityLevel("sedentary")}
-            title="Sedentary"
-            desc="Office job, little exercise"
+            title={t("wizard.activity.sedentary")}
+            desc={t("wizard.activity.sedentaryDesc")}
             icon="🛋️"
           />
           <Option
             selected={activityLevel === "light"}
             onClick={() => setActivityLevel("light")}
-            title="Lightly Active"
-            desc="Walking, light workouts 1-3x/week"
+            title={t("wizard.activity.light")}
+            desc={t("wizard.activity.lightDesc")}
             icon="🚶"
           />
           <Option
             selected={activityLevel === "moderate"}
             onClick={() => setActivityLevel("moderate")}
-            title="Moderately Active"
-            desc="Exercise 3-5x/week"
+            title={t("wizard.activity.moderate")}
+            desc={t("wizard.activity.moderateDesc")}
             icon="🏃"
           />
           <Option
             selected={activityLevel === "active"}
             onClick={() => setActivityLevel("active")}
-            title="Very Active"
-            desc="Daily intense exercise"
+            title={t("wizard.activity.active")}
+            desc={t("wizard.activity.activeDesc")}
             icon="🔥"
           />
         </div>
 
         <div className="mb-4">
-          <h2 className="text-xl font-extrabold text-slate-800">Your Goal</h2>
-          <p className="text-xs text-slate-500">Target outcome</p>
+          <h2 className="text-xl font-extrabold text-slate-800">{t("wizard.goal.title")}</h2>
+          <p className="text-xs text-slate-500">{t("wizard.goal.subtitle")}</p>
         </div>
 
         <div className="grid grid-cols-3 gap-2 mb-6">
           <Option
             selected={goal === "lose_weight"}
             onClick={() => setGoal("lose_weight")}
-            title="Lose Weight"
+            title={t("wizard.goal.lose_weight")}
             icon="📉"
           />
           <Option
             selected={goal === "maintain"}
             onClick={() => setGoal("maintain")}
-            title="Maintain"
+            title={t("wizard.goal.maintain")}
             icon="⚖️"
           />
           <Option
             selected={goal === "gain_muscle"}
             onClick={() => setGoal("gain_muscle")}
-            title="Gain Muscle"
+            title={t("wizard.goal.gain_muscle")}
             icon="💪"
           />
         </div>
@@ -149,7 +151,7 @@ const ActivityGoalStep: React.FC<ActivityGoalStepProps> = ({
           >
             <div className="bg-white p-3 rounded-xl border border-slate-200">
               <label className="text-[10px] font-bold text-slate-400 uppercase">
-                Target Weight (Optional)
+                {t("wizard.goal.targetWeight")}
               </label>
               <div className="flex items-center gap-2 mt-1">
                 <input
@@ -168,12 +170,12 @@ const ActivityGoalStep: React.FC<ActivityGoalStepProps> = ({
 
       <div className="absolute bottom-0 left-0 w-full px-4 pb-8 pt-4 bg-gradient-to-t from-slate-50 via-slate-50 to-transparent">
         <motion.button
-          whileTap={{ scale: 0.98 }}
+          whileTap={{ scale: 0.96 }}
           onClick={handleSubmit}
           disabled={!isValid}
           className="w-full py-3.5 bg-emerald-500 text-white rounded-xl font-bold text-base shadow-lg shadow-emerald-200 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
         >
-          Review Plan <ChevronRight size={18} />
+          {t("wizard.goal.viewPlan")} <ChevronRight size={18} />
         </motion.button>
       </div>
     </div>

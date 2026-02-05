@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { User } from "../../../types";
 import { ChevronRight, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 interface BodyStatsStepProps {
   age?: number;
@@ -11,9 +12,13 @@ interface BodyStatsStepProps {
   onBack: () => void;
 }
 
-// Extracted outside to prevent re-mount/focus loss
-const InputField = ({ label, value, onChange, placeholder, suffix }: any) => (
-  <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-transparent transition-all">
+const InputField = ({ label, value, onChange, placeholder, suffix, index }: any) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.1 * (index || 0), duration: 0.4 }}
+    className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-transparent focus-within:shadow-lg focus-within:shadow-emerald-50 transition-all duration-300"
+  >
     <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">
       {label}
     </label>
@@ -28,7 +33,7 @@ const InputField = ({ label, value, onChange, placeholder, suffix }: any) => (
       />
       <span className="text-sm font-bold text-slate-400">{suffix}</span>
     </div>
-  </div>
+  </motion.div>
 );
 
 const BodyStatsStep: React.FC<BodyStatsStepProps> = ({
@@ -38,7 +43,7 @@ const BodyStatsStep: React.FC<BodyStatsStepProps> = ({
   onNext,
   onBack,
 }) => {
-  // Use local state strings to handle typing comfortably
+  const { t } = useTranslation();
   const [age, setAge] = useState<string>(
     initialAge ? initialAge.toString() : "",
   );
@@ -71,43 +76,49 @@ const BodyStatsStep: React.FC<BodyStatsStepProps> = ({
       </button>
 
       <div className="mb-6 text-center">
-        <h2 className="text-2xl font-extrabold text-slate-900">Your Stats</h2>
+        <h2 className="text-2xl font-extrabold text-slate-900">{t("wizard.bodyStats.title")}</h2>
         <p className="text-sm text-slate-500 font-medium">
-          To calculate precise needs
+          {t("wizard.bodyStats.subtitle")}
         </p>
       </div>
 
       <div className="space-y-3 flex-1 pb-8">
         <InputField
-          label="Age"
+          label={t("wizard.bodyStats.age")}
           value={age}
           onChange={(e: any) => setAge(e.target.value)}
           placeholder="25"
-          suffix="yrs"
+          suffix={t("wizard.bodyStats.ageSuffix")}
+          index={0}
         />
         <InputField
-          label="Height"
+          label={t("wizard.bodyStats.height")}
           value={height}
           onChange={(e: any) => setHeight(e.target.value)}
           placeholder="175"
-          suffix="cm"
+          suffix={t("wizard.bodyStats.heightSuffix")}
+          index={1}
         />
         <InputField
-          label="Weight"
+          label={t("wizard.bodyStats.weight")}
           value={weight}
           onChange={(e: any) => setWeight(e.target.value)}
           placeholder="70"
-          suffix="kg"
+          suffix={t("wizard.bodyStats.weightSuffix")}
+          index={2}
         />
       </div>
 
       <motion.button
-        whileTap={{ scale: 0.98 }}
+        whileTap={{ scale: 0.96 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
         onClick={handleSubmit}
         disabled={!isValid}
         className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-bold text-lg shadow-xl shadow-emerald-200 flex items-center justify-center gap-2 mt-auto disabled:opacity-50 transition-all mb-8"
       >
-        Continue <ChevronRight size={20} />
+        {t("wizard.bodyStats.continue")} <ChevronRight size={20} />
       </motion.button>
     </div>
   );

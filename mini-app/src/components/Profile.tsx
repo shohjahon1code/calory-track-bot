@@ -72,8 +72,16 @@ const Profile: React.FC = () => {
     }));
   };
 
-  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    i18n.changeLanguage(e.target.value);
+  const handleLanguageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLang = e.target.value;
+    i18n.changeLanguage(newLang);
+    if (user?.tgId) {
+      try {
+        await apiService.updateProfile(user.tgId, { language: newLang as "uz" | "en" });
+      } catch (error) {
+        console.error("Error saving language:", error);
+      }
+    }
   };
 
   const handleSave = async () => {

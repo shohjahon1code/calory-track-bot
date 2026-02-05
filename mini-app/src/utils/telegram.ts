@@ -69,6 +69,14 @@ class TelegramService {
     });
   }
 
+  haptic(type: "light" | "medium" | "heavy" = "light") {
+    try {
+      this.webApp.HapticFeedback?.impactOccurred(type);
+    } catch {
+      // Haptic not available
+    }
+  }
+
   openLink(url: string) {
     if (this.webApp.openLink) {
       this.webApp.openLink(url);

@@ -15,6 +15,8 @@ export interface User {
   targetWeight?: number; // kg
   weightHistory?: { weight: number; date: string }[];
   units?: "metric" | "imperial";
+  language?: "uz" | "en";
+  workType?: "office" | "physical" | "student" | "homemaker" | "freelance";
 }
 
 export interface Meal {
@@ -28,6 +30,23 @@ export interface Meal {
   fats: number;
   imageUrl?: string;
   timestamp: string;
+}
+
+export interface AIProgressAnalysis {
+  estimatedWeeks: number;
+  estimatedDate: string;
+  weeklyRateRecommendation: number;
+  dailyCalorieTarget: number;
+  deficitOrSurplus: number;
+  milestones: {
+    percentage: number;
+    targetWeight: number;
+    estimatedDate: string;
+  }[];
+  recommendations: string[];
+  weeklyPlan: string;
+  motivationalMessage: string;
+  riskWarnings: string[];
 }
 
 export interface DailyStats {
