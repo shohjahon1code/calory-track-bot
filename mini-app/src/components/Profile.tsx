@@ -10,7 +10,6 @@ import {
   Target,
   Scale,
   Ruler,
-  Settings,
   LogOut,
   AlertCircle,
   Languages,

@@ -11,10 +11,8 @@ import {
   Droplets,
   Wheat,
   Utensils,
-  Plus,
   Clock,
   ChevronRight,
-  TrendingUp,
   Award,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";

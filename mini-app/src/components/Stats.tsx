@@ -419,7 +419,7 @@ const Stats: React.FC = () => {
                       dataKey="value"
                       stroke="none"
                     >
-                      {analytics.calorieDistribution.map((entry, index) => (
+                      {analytics.calorieDistribution.map((_entry, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={COLORS[index % COLORS.length]}
@@ -531,7 +531,7 @@ const Stats: React.FC = () => {
         {showWeightModal && (
           <WeightModal
             currentWeight={currentWeight}
-            onSave={(w) => {
+            onSave={(_w) => {
               setShowWeightModal(false);
               fetchStats();
             }}
