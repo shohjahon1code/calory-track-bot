@@ -682,7 +682,11 @@ const Stats: React.FC = () => {
         {showWeightModal && (
           <WeightModal
             currentWeight={currentWeight}
-            onSave={(_w) => {
+            onSave={async (w) => {
+              const tgId = telegramService.getUserId();
+              if (tgId) {
+                await apiService.updateProfile(tgId, { weight: w });
+              }
               setShowWeightModal(false);
               fetchStats();
             }}
