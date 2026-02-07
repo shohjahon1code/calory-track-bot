@@ -47,10 +47,15 @@ router.get("/:tgId", async (req: Request, res: Response) => {
       return;
     }
 
-    // Get Wallet
-    let wallet = await Wallet.findOne({ userId: user._id });
+    // Get Wallet (search by userId OR tgId to handle legacy data)
+    let wallet = await Wallet.findOne({ userId: user._id }) ||
+      await Wallet.findOne({ tgId: user.tgId });
     if (!wallet) {
       wallet = await Wallet.create({ userId: user._id, tgId: user.tgId });
+    } else if (String(wallet.userId) !== String(user._id)) {
+      // Fix mismatched userId
+      wallet.userId = user._id;
+      await wallet.save();
     }
 
     // Get Subscription
@@ -58,6 +63,8 @@ router.get("/:tgId", async (req: Request, res: Response) => {
       userId: user._id,
       status: "active",
     });
+
+    console.log(`[SUB DEBUG] tgId=${tgId}, userId=${user._id}, found=${!!subscription}, endDate=${subscription?.endDate}, status=${subscription?.status}`);
 
     // Check expiry logic
     if (
@@ -68,6 +75,7 @@ router.get("/:tgId", async (req: Request, res: Response) => {
       subscription.status = "expired";
       await subscription.save();
       subscription = null;
+      console.log(`[SUB DEBUG] Subscription expired for tgId=${tgId}`);
     }
 
     // Get Transactions
