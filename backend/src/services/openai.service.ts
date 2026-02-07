@@ -11,11 +11,16 @@ class OpenAIService {
     });
   }
 
-  private SYSTEM_PROMPT = `You are a nutrition expert. Analyze the input (image or text) and return ONLY a JSON object with this exact structure:
+  private getSystemPrompt(language: string = "en"): string {
+    const langInstruction = language === "uz"
+      ? "Write ALL food names in Uzbek. Example: 'Osh (Plov)', 'Non', 'Somsa', 'Sabzavotli salat'. International dishes should also be in Uzbek or transliterated."
+      : "Write ALL food names in English. For Uzbek dishes, include the original name (e.g., 'Plov (Uzbek Rice Dish)').";
+
+    return `You are a nutrition expert. Analyze the input (image or text) and return ONLY a JSON object with this exact structure:
 {
   "items": [
     {
-      "name": "descriptive name (in English)",
+      "name": "descriptive name",
       "calories": number,
       "protein": number (grams),
       "carbs": number (grams),
@@ -36,21 +41,23 @@ Rules:
 3. Calculate totals accurately.
 4. If not food, return "items": []
 5. If blurry/unclear, return "items": []
-6. Handle input in English, Russian, or Uzbek. Translate food names to English for consistency but keep local names in parenthesis if specific (e.g., "Plov (Uzbek Rice Dish)").
-7. Return ONLY JSON.`;
+6. Handle input in English, Russian, or Uzbek.
+7. ${langInstruction}
+8. Return ONLY JSON.`;
+  }
 
   /**
    * Analyze food image using GPT-4o Vision
    * Returns structured nutrition data or error
    */
-  async analyzeFoodImage(imageBase64: string): Promise<OpenAIAnalysisResult> {
+  async analyzeFoodImage(imageBase64: string, language: string = "en"): Promise<OpenAIAnalysisResult> {
     try {
       const response = await this.client.chat.completions.create({
         model: OPENAI_CONFIG.MODEL,
         messages: [
           {
             role: "system",
-            content: this.SYSTEM_PROMPT,
+            content: this.getSystemPrompt(language),
           },
           {
             role: "user",
@@ -86,12 +93,12 @@ Rules:
   /**
    * Analyze food text using GPT-4o
    */
-  async analyzeText(text: string): Promise<OpenAIAnalysisResult> {
+  async analyzeText(text: string, language: string = "en"): Promise<OpenAIAnalysisResult> {
     try {
       const response = await this.client.chat.completions.create({
         model: OPENAI_CONFIG.MODEL,
         messages: [
-          { role: "system", content: this.SYSTEM_PROMPT },
+          { role: "system", content: this.getSystemPrompt(language) },
           { role: "user", content: `Analyze this food text: "${text}"` },
         ],
         max_tokens: OPENAI_CONFIG.MAX_TOKENS,
@@ -160,6 +167,40 @@ Rules:
       return { success: true, data };
     } catch (error) {
       console.error("OpenAI Progress Analysis Error:", error);
+      return { success: false, error: ERROR_MESSAGES.OPENAI_ERROR };
+    }
+  }
+
+  /**
+   * Chat completion — returns natural text (no JSON format)
+   */
+  async chatCompletion(
+    systemPrompt: string,
+    messages: { role: "user" | "assistant"; content: string }[],
+  ): Promise<{ success: boolean; response?: string; error?: string }> {
+    try {
+      const openaiMessages: { role: "system" | "user" | "assistant"; content: string }[] = [
+        { role: "system", content: systemPrompt },
+        ...messages.map((m) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        })),
+      ];
+
+      const response = await this.client.chat.completions.create({
+        model: OPENAI_CONFIG.MODEL,
+        messages: openaiMessages,
+        max_tokens: 800,
+        temperature: 0.7,
+      });
+
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        return { success: false, error: "No response from AI" };
+      }
+      return { success: true, response: content };
+    } catch (error) {
+      console.error("OpenAI Chat Error:", error);
       return { success: false, error: ERROR_MESSAGES.OPENAI_ERROR };
     }
   }

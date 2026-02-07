@@ -98,6 +98,47 @@ const userSchema = new Schema<IUserDocument>(
     lastAnalysisDate: {
       type: Date,
     },
+    // ── Gamification ──
+    currentStreak: { type: Number, default: 0 },
+    longestStreak: { type: Number, default: 0 },
+    lastLogDate: { type: Date },
+    xp: { type: Number, default: 0 },
+    level: { type: Number, default: 1 },
+    badges: [{
+      id: { type: String, required: true },
+      name: { type: String, required: true },
+      description: { type: String, default: "" },
+      icon: { type: String, default: "" },
+      category: { type: String, enum: ["streak", "logging", "nutrition", "social", "milestone"] },
+      unlockedAt: { type: Date, default: Date.now },
+      seen: { type: Boolean, default: false },
+    }],
+    // ── Social ──
+    referralCode: { type: String, unique: true, sparse: true },
+    privacySettings: {
+      showStreak: { type: Boolean, default: true },
+      showCalories: { type: Boolean, default: true },
+      showWeight: { type: Boolean, default: false },
+    },
+    // ── Reminders ──
+    reminders: {
+      breakfast: { enabled: { type: Boolean, default: false }, time: { type: String, default: "08:00" } },
+      lunch: { enabled: { type: Boolean, default: false }, time: { type: String, default: "13:00" } },
+      dinner: { enabled: { type: Boolean, default: false }, time: { type: String, default: "19:00" } },
+      weighIn: { enabled: { type: Boolean, default: false }, dayOfWeek: { type: Number, default: 1 }, time: { type: String, default: "09:00" } },
+      streakReminder: { enabled: { type: Boolean, default: true }, time: { type: String, default: "20:00" } },
+      dailyReport: { enabled: { type: Boolean, default: true }, time: { type: String, default: "21:00" } },
+    },
+    timezone: { type: String, default: "Asia/Tashkent" },
+    // ── Report Card ──
+    lastReportCard: { type: Schema.Types.Mixed },
+    lastReportCardDate: { type: Date },
+    // ── Recipes ──
+    recipeSuggestionsToday: { type: Number, default: 0 },
+    lastRecipeSuggestionDate: { type: Date },
+    // ── Chat Coach ──
+    chatMessageCount: { type: Number, default: 0 },
+    lastChatDate: { type: Date },
   },
   {
     timestamps: true,
@@ -106,6 +147,9 @@ const userSchema = new Schema<IUserDocument>(
 
 // Indexes for performance
 userSchema.index({ tgId: 1 });
+userSchema.index({ currentStreak: -1 });
+userSchema.index({ xp: -1 });
+userSchema.index({ referralCode: 1 });
 
 // Methods
 userSchema.methods.updateGoal = async function (

@@ -69,9 +69,13 @@ class TelegramService {
     });
   }
 
-  haptic(type: "light" | "medium" | "heavy" = "light") {
+  haptic(type: "light" | "medium" | "heavy" | "success" | "error" = "light") {
     try {
-      this.webApp.HapticFeedback?.impactOccurred(type);
+      if (type === "success" || type === "error") {
+        this.webApp.HapticFeedback?.notificationOccurred(type);
+      } else {
+        this.webApp.HapticFeedback?.impactOccurred(type);
+      }
     } catch {
       // Haptic not available
     }
@@ -82,6 +86,15 @@ class TelegramService {
       this.webApp.openLink(url);
     } else {
       window.open(url, "_blank");
+    }
+  }
+
+  shareUrl(url: string) {
+    try {
+      const shareLink = `https://t.me/share/url?url=${encodeURIComponent(url)}`;
+      this.openLink(shareLink);
+    } catch {
+      // Sharing not available
     }
   }
 }

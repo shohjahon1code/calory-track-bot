@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { User, Meal, DailyStats, AIProgressAnalysis } from "../types";
+import { User, Meal, DailyStats, AIProgressAnalysis, GamificationProfile, ReminderSettings, DailyReportCard, ChatMessage, ProgressPhoto } from "../types";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:3000/api";
@@ -172,6 +172,166 @@ class ApiService {
       planId,
     });
     return response.data;
+  }
+  // ── Gamification ──
+
+  async getGamification(tgId: string): Promise<GamificationProfile> {
+    const response = await this.client.get<GamificationProfile>(`/user/${tgId}/gamification`);
+    return response.data;
+  }
+
+  async markBadgesSeen(tgId: string, badgeIds: string[]): Promise<void> {
+    await this.client.post(`/user/${tgId}/badges/seen`, { badgeIds });
+  }
+
+  // ── Reminders ──
+
+  async getReminders(tgId: string): Promise<ReminderSettings> {
+    const response = await this.client.get<ReminderSettings>(`/user/${tgId}/reminders`);
+    return response.data;
+  }
+
+  async updateReminders(tgId: string, reminders: Partial<ReminderSettings>): Promise<void> {
+    await this.client.put(`/user/${tgId}/reminders`, reminders);
+  }
+
+  // ── Social ──
+
+  async getFriends(tgId: string): Promise<any[]> {
+    const response = await this.client.get(`/social/${tgId}/friends`);
+    return response.data;
+  }
+
+  async getLeaderboard(tgId: string): Promise<any[]> {
+    const response = await this.client.get(`/social/${tgId}/leaderboard`);
+    return response.data;
+  }
+
+  async getPendingRequests(tgId: string): Promise<any[]> {
+    const response = await this.client.get(`/social/${tgId}/requests`);
+    return response.data;
+  }
+
+  async sendFriendRequest(tgId: string, identifier: string): Promise<any> {
+    const response = await this.client.post(`/social/${tgId}/request`, { identifier });
+    return response.data;
+  }
+
+  async acceptFriendRequest(tgId: string, friendTgId: string): Promise<any> {
+    const response = await this.client.post(`/social/${tgId}/accept`, { friendTgId });
+    return response.data;
+  }
+
+  async removeFriend(tgId: string, friendTgId: string): Promise<void> {
+    await this.client.delete(`/social/${tgId}/friend/${friendTgId}`);
+  }
+
+  async getReferralCode(tgId: string): Promise<{ referralCode: string; link: string }> {
+    const response = await this.client.get(`/social/${tgId}/referral`);
+    return response.data;
+  }
+
+  // ── Meal Plan ──
+
+  async getActiveMealPlan(tgId: string): Promise<any> {
+    const response = await this.client.get(`/meal-plan/${tgId}`);
+    return response.data;
+  }
+
+  async generateMealPlan(tgId: string): Promise<any> {
+    const response = await this.client.post(`/meal-plan/${tgId}/generate`);
+    return response.data;
+  }
+
+  async regenerateMeal(tgId: string, planId: string, dayIndex: number, mealSlot: string): Promise<any> {
+    const response = await this.client.put(`/meal-plan/${tgId}/regenerate`, { planId, dayIndex, mealSlot });
+    return response.data;
+  }
+
+  // ── Recipes ──
+
+  async getRecipeSuggestions(tgId: string, remaining: { calories: number; protein: number; carbs: number; fats: number }): Promise<any> {
+    const params = new URLSearchParams({
+      remainingCalories: remaining.calories.toString(),
+      remainingProtein: remaining.protein.toString(),
+      remainingCarbs: remaining.carbs.toString(),
+      remainingFats: remaining.fats.toString(),
+    });
+    const response = await this.client.get(`/recipes/${tgId}/suggestions?${params}`);
+    return response.data;
+  }
+
+  async getQuickRecipes(tgId: string): Promise<any[]> {
+    const response = await this.client.get(`/recipes/${tgId}/quick`);
+    return response.data;
+  }
+
+  async getSavedRecipes(tgId: string): Promise<any[]> {
+    const response = await this.client.get(`/recipes/${tgId}/saved`);
+    return response.data;
+  }
+
+  async saveRecipe(tgId: string, recipeId: string): Promise<void> {
+    await this.client.post(`/recipes/${tgId}/save`, { recipeId });
+  }
+
+  async unsaveRecipe(tgId: string, recipeId: string): Promise<void> {
+    await this.client.delete(`/recipes/${tgId}/save/${recipeId}`);
+  }
+
+  // ── Prompt Log ──
+
+  async promptLog(tgId: string): Promise<void> {
+    await this.client.post(`/user/${tgId}/prompt-log`);
+  }
+
+  // Report Card
+  async getReportCard(tgId: string): Promise<DailyReportCard | null> {
+    try {
+      const response = await this.client.get<DailyReportCard>(`/user/${tgId}/report-card`);
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) return null;
+      throw error;
+    }
+  }
+
+  async refreshReportCard(tgId: string): Promise<DailyReportCard> {
+    const response = await this.client.post<DailyReportCard>(`/user/${tgId}/report-card/refresh`);
+    return response.data;
+  }
+
+  // ── Chat Coach ──
+
+  async sendChatMessage(tgId: string, message: string, language: string): Promise<{ success: boolean; response?: string; remainingMessages?: number }> {
+    const res = await this.client.post(`/chat/${tgId}/send`, { message, language });
+    return res.data;
+  }
+
+  async getChatHistory(tgId: string): Promise<ChatMessage[]> {
+    const response = await this.client.get<ChatMessage[]>(`/chat/${tgId}/history`);
+    return response.data;
+  }
+
+  // ── Progress Photos ──
+
+  async getProgressPhotos(tgId: string): Promise<ProgressPhoto[]> {
+    const response = await this.client.get<ProgressPhoto[]>(`/progress-photos/${tgId}`);
+    return response.data;
+  }
+
+  async getPhotoComparison(tgId: string): Promise<{ before: ProgressPhoto; after: ProgressPhoto } | null> {
+    try {
+      const response = await this.client.get<{ before: ProgressPhoto; after: ProgressPhoto }>(`/progress-photos/${tgId}/comparison`);
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) return null;
+      throw error;
+    }
+  }
+
+  async deleteProgressPhoto(photoId: string, tgId: string): Promise<void> {
+    await this.client.delete(`/progress-photos/${photoId}?tgId=${tgId}`);
   }
 }
 

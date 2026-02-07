@@ -1,21 +1,28 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import Dashboard from "./components/Dashboard";
 import Stats from "./components/Stats";
 import Profile from "./components/Profile";
 import Premium from "./components/Premium";
 import EditMeal from "./components/EditMeal";
 import BottomNavigation from "./components/BottomNavigation";
+import PageTransition from "./components/ui/PageTransition";
+import { ToastProvider } from "./components/ui/Toast";
+import ShimmerSkeleton from "./components/ui/ShimmerSkeleton";
 import telegramService from "./utils/telegram";
 import apiService from "./services/api";
 import i18n from "./i18n";
 import "./App.css";
+
+const Friends = lazy(() => import("./components/Friends"));
+const MealPlan = lazy(() => import("./components/MealPlan"));
+const Recipes = lazy(() => import("./components/Recipes"));
+const ChatCoach = lazy(() => import("./components/ChatCoach"));
 
 function App() {
   const [activeTab, setActiveTab] = useState("home");
   const [editMealId, setEditMealId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Sync language from backend
     const syncLanguage = async () => {
       try {
         const tgId = telegramService.getUserId();
@@ -30,7 +37,6 @@ function App() {
     };
     syncLanguage();
 
-    // Check if opened with start_param (from deep link or query param)
     const params = new URLSearchParams(window.location.search);
     const urlStartParam = params.get("start_param");
     const telegramStartParam =
@@ -50,7 +56,10 @@ function App() {
 
   const handleTabChange = (tab: string) => {
     if (tab === "log") {
-      // Close Mini App so user can send photo to bot
+      const tgId = telegramService.getUserId();
+      if (tgId) {
+        apiService.promptLog(tgId).catch(() => {});
+      }
       telegramService.close();
       return;
     }
@@ -60,36 +69,63 @@ function App() {
   const renderContent = () => {
     switch (activeTab) {
       case "home":
-        return <Dashboard />;
+        return <Dashboard onTabChange={handleTabChange} />;
       case "stats":
         return <Stats />;
       case "profile":
-        return <Profile />;
+        return <Profile onTabChange={handleTabChange} />;
       case "premium":
         return <Premium />;
-      case "edit_meal": // Handle Edit Meal View
+      case "friends":
+        return (
+          <Suspense fallback={<ShimmerSkeleton variant="friends" />}>
+            <Friends />
+          </Suspense>
+        );
+      case "meal_plan":
+        return (
+          <Suspense fallback={<ShimmerSkeleton variant="mealPlan" />}>
+            <MealPlan onTabChange={handleTabChange} />
+          </Suspense>
+        );
+      case "recipes":
+        return (
+          <Suspense fallback={<ShimmerSkeleton variant="mealList" />}>
+            <Recipes onTabChange={handleTabChange} />
+          </Suspense>
+        );
+      case "chat_coach":
+        return (
+          <Suspense fallback={<ShimmerSkeleton variant="mealList" />}>
+            <ChatCoach onBack={() => setActiveTab("home")} />
+          </Suspense>
+        );
+      case "edit_meal":
         return editMealId ? (
-          <div className="bg-slate-50 min-h-screen">
-            {/* Import assuming EditMeal is default export */}
-            <EditMeal
-              mealId={editMealId}
-              onSave={() => setActiveTab("home")}
-              onCancel={() => setActiveTab("home")}
-            />
-          </div>
+          <EditMeal
+            mealId={editMealId}
+            onSave={() => setActiveTab("home")}
+            onCancel={() => setActiveTab("home")}
+          />
         ) : (
-          <Dashboard />
+          <Dashboard onTabChange={handleTabChange} />
         );
       default:
-        return <Dashboard />;
+        return <Dashboard onTabChange={handleTabChange} />;
     }
   };
 
   return (
-    <div className="app min-h-screen bg-slate-50 text-slate-900 pb-20">
-      {renderContent()}
-      <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
-    </div>
+    <ToastProvider>
+      <div className={`app min-h-screen bg-surface-secondary text-slate-900 ${activeTab === "chat_coach" ? "" : "pb-20"}`}>
+        <PageTransition activeKey={activeTab}>
+          {renderContent()}
+        </PageTransition>
+        {activeTab !== "chat_coach" && (
+          <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+        )}
+      </div>
+    </ToastProvider>
   );
 }
 

@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import telegramService from "../utils/telegram";
 import apiService from "../services/api";
-import { User, DailyStats, Meal } from "../types";
+import { User, DailyStats, Meal, GamificationProfile, Badge, DailyReportCard } from "../types";
 import GoalSetting from "./GoalSetting";
 import Wizard from "./Wizard/Wizard";
 import LoadingSkeleton from "./LoadingSkeleton";
+import StreakBanner from "./StreakBanner";
+import XPProgressBar from "./XPProgressBar";
+import BadgeUnlockModal from "./BadgeUnlockModal";
+import ReportCardDetail from "./ReportCardDetail";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Flame,
@@ -14,6 +18,13 @@ import {
   Clock,
   ChevronRight,
   Award,
+  CalendarDays,
+  ChefHat,
+  Crown,
+  MessageCircle,
+  TrendingUp,
+  TrendingDown,
+  CheckCircle,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -73,29 +84,51 @@ const MacroCard = ({
   );
 };
 
-const Dashboard: React.FC = () => {
+interface DashboardProps {
+  onTabChange?: (tab: string) => void;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
   const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<DailyStats | null>(null);
   const [meals, setMeals] = useState<Meal[]>([]);
+  const [gamification, setGamification] = useState<GamificationProfile | null>(null);
+  const [unseenBadge, setUnseenBadge] = useState<Badge | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
+  const [reportCard, setReportCard] = useState<DailyReportCard | null>(null);
+  const [showReportDetail, setShowReportDetail] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showGoalSetting, setShowGoalSetting] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const tgId = telegramService.getUserId();
       if (!tgId) return;
 
-      const [userData, statsData, mealsData] = await Promise.all([
+      const [userData, statsData, mealsData, gamificationData, subData, reportData] = await Promise.all([
         apiService.getUser(tgId),
         apiService.getTodayStats(tgId),
         apiService.getTodayMeals(tgId),
+        apiService.getGamification(tgId).catch(() => null),
+        apiService.getSubscription(tgId).catch(() => null),
+        apiService.getReportCard(tgId).catch(() => null),
       ]);
 
       setUser(userData);
       setStats(statsData);
       setMeals(mealsData);
+      setIsPremium(subData?.isPremium || false);
+      setReportCard(reportData);
+
+      if (gamificationData) {
+        setGamification(gamificationData);
+        // Show first unseen badge
+        if (gamificationData.unseenBadges.length > 0) {
+          setUnseenBadge(gamificationData.unseenBadges[0]);
+        }
+      }
 
       if (!userData.gender || !userData.goal) {
         setShowWizard(true);
@@ -105,13 +138,28 @@ const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  const handleBadgeDismiss = async () => {
+    if (!unseenBadge) return;
+    const tgId = telegramService.getUserId();
+    if (tgId) {
+      await apiService.markBadgesSeen(tgId, [unseenBadge.id]).catch(() => {});
+    }
+    // Show next unseen badge if any
+    if (gamification && gamification.unseenBadges.length > 1) {
+      const remaining = gamification.unseenBadges.filter(b => b.id !== unseenBadge.id);
+      setUnseenBadge(remaining.length > 0 ? remaining[0] : null);
+    } else {
+      setUnseenBadge(null);
+    }
   };
 
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchData]);
 
   const handleGoalSet = (newGoal: number) => {
     if (user) setUser({ ...user, dailyGoal: newGoal });
@@ -192,13 +240,27 @@ const Dashboard: React.FC = () => {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-2"
           >
-            <div className="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm flex items-center justify-center text-slate-500 font-bold text-lg overflow-hidden">
-              {user.firstName?.charAt(0) || "U"}
+            <div className="relative">
+              <div className="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm flex items-center justify-center text-slate-500 font-bold text-lg overflow-hidden">
+                {user.firstName?.charAt(0) || "U"}
+              </div>
+              {isPremium && (
+                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm border-2 border-white">
+                  <Crown size={10} className="text-white" />
+                </div>
+              )}
             </div>
             <div>
-              <h1 className="text-xl font-extrabold text-slate-800">
-                {t("home.hello")}, {user.firstName} 👋
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-extrabold text-slate-800">
+                  {t("home.hello")}, {user.firstName} 👋
+                </h1>
+                {isPremium && (
+                  <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm">
+                    PRO
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-slate-500 font-medium tracking-wide">
                 {t("home.letsCrushIt")}
               </p>
@@ -213,6 +275,23 @@ const Dashboard: React.FC = () => {
           <Award size={20} />
         </motion.button>
       </div>
+
+      {/* Streak & XP Section */}
+      {gamification && (
+        <div className="px-4 space-y-3">
+          <StreakBanner
+            currentStreak={gamification.currentStreak}
+            xp={gamification.xp}
+            level={gamification.level}
+          />
+          <XPProgressBar
+            xp={gamification.xp}
+            level={gamification.level}
+            xpToNextLevel={gamification.xpToNextLevel}
+            xpForCurrentLevel={gamification.xpForCurrentLevel}
+          />
+        </div>
+      )}
 
       {/* Hero Section - Calorie Ring */}
       <motion.div
@@ -317,6 +396,55 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
+      {/* Quick Actions */}
+      <div className="px-4 grid grid-cols-2 gap-3">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          onClick={() => onTabChange?.("meal_plan")}
+          className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 cursor-pointer active:scale-[0.97] transition-transform"
+        >
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center mb-3 shadow-sm">
+            <CalendarDays size={20} className="text-white" />
+          </div>
+          <h3 className="text-sm font-bold text-slate-800">{t("mealPlan.title")}</h3>
+          <p className="text-[10px] text-slate-400 mt-0.5">{t("mealPlan.subtitle")}</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          onClick={() => onTabChange?.("recipes")}
+          className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 cursor-pointer active:scale-[0.97] transition-transform"
+        >
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mb-3 shadow-sm">
+            <ChefHat size={20} className="text-white" />
+          </div>
+          <h3 className="text-sm font-bold text-slate-800">{t("recipes.title")}</h3>
+          <p className="text-[10px] text-slate-400 mt-0.5">{t("recipes.quickSuggestions")}</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          onClick={() => onTabChange?.("chat_coach")}
+          className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 cursor-pointer active:scale-[0.97] transition-transform col-span-2"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-sm">
+              <MessageCircle size={20} className="text-white" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-800">{t("chatCoach.title")}</h3>
+              <p className="text-[10px] text-slate-400 mt-0.5">{t("chatCoach.subtitle")}</p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
       {/* Today's Meals */}
       <div className="px-4 space-y-4">
         <div className="flex items-center justify-between">
@@ -388,6 +516,87 @@ const Dashboard: React.FC = () => {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Daily Report Card Preview */}
+      {reportCard && (
+        <div className="px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            onClick={() => setShowReportDetail(true)}
+            className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 cursor-pointer active:scale-[0.98] transition-transform"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${
+                  reportCard.grade === "A" ? "from-emerald-400 to-green-500" :
+                  reportCard.grade === "B" ? "from-blue-400 to-indigo-500" :
+                  reportCard.grade === "C" ? "from-amber-400 to-yellow-500" :
+                  reportCard.grade === "D" ? "from-orange-400 to-red-400" :
+                  "from-red-500 to-rose-600"
+                } flex items-center justify-center text-xl shadow-sm`}>
+                  {reportCard.gradeEmoji}
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800">
+                    {t("reportCard.title")}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-lg font-black text-slate-800">
+                      {reportCard.grade}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      {reportCard.calorieScore.consumed}/{reportCard.calorieScore.goal} kcal
+                    </span>
+                    {reportCard.calorieScore.status === "on_target" ? (
+                      <CheckCircle size={14} className="text-emerald-500" />
+                    ) : reportCard.calorieScore.status === "over" ? (
+                      <TrendingUp size={14} className="text-red-500" />
+                    ) : (
+                      <TrendingDown size={14} className="text-amber-500" />
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {!reportCard.isPremium && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-gradient-to-r from-amber-400 to-orange-500 text-white">
+                    PRO
+                  </span>
+                )}
+                <ChevronRight size={18} className="text-slate-300" />
+              </div>
+            </div>
+
+            {reportCard.isPremium && reportCard.highlights.length > 0 && (
+              <p className="text-xs text-slate-500 mt-2 truncate">
+                ✨ {reportCard.highlights[0]}
+              </p>
+            )}
+
+            {!reportCard.isPremium && (
+              <p className="text-[11px] text-amber-600 mt-2 font-medium">
+                {t("reportCard.tapForMore")}
+              </p>
+            )}
+          </motion.div>
+        </div>
+      )}
+
+      {/* Report Card Detail Modal */}
+      <ReportCardDetail
+        report={reportCard}
+        isOpen={showReportDetail}
+        onClose={() => setShowReportDetail(false)}
+        onUpgrade={() => {
+          setShowReportDetail(false);
+          onTabChange?.("premium");
+        }}
+      />
+
+      {/* Badge Unlock Modal */}
+      <BadgeUnlockModal badge={unseenBadge} onClose={handleBadgeDismiss} />
     </div>
   );
 };

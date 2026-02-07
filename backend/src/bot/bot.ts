@@ -287,7 +287,7 @@ bot.on("callback_query:data", async (ctx) => {
     const tgId = ctx.from.id.toString();
 
     try {
-      const meal = await mealService.confirmMeal(mealId, tgId);
+      const { meal, gamification } = await mealService.confirmMeal(mealId, tgId);
       if (!meal) {
         await ctx.answerCallbackQuery("❌ Ovqat topilmadi");
         return;
@@ -300,6 +300,21 @@ bot.on("callback_query:data", async (ctx) => {
       );
       const progressBar = generateProgressBar(stats.progressPercentage);
 
+      // Build gamification line
+      let gamLine = "";
+      if (gamification) {
+        gamLine = `\n⚡ +${gamification.xpGained} XP`;
+        if (gamification.newStreak > 1) {
+          gamLine += ` | 🔥 ${gamification.newStreak} kun streak`;
+        }
+        if (gamification.levelUp) {
+          gamLine += `\n🎉 Level ${gamification.newLevel} ga ko'tarildingiz!`;
+        }
+        if (gamification.newBadges.length > 0) {
+          gamLine += `\n🏆 Yangi nishon: ${gamification.newBadges.map(b => b.name).join(", ")}`;
+        }
+      }
+
       await ctx.editMessageText(
         `${SUCCESS_MESSAGES.MEAL_SAVED}\n\n` +
           `🍽️ **${meal.name}**\n\n` +
@@ -309,7 +324,8 @@ bot.on("callback_query:data", async (ctx) => {
           `🧈 Yog': ${meal.fats}g\n\n` +
           `**Bugungi Natija:**\n` +
           `${progressBar} ${stats.progressPercentage}%\n` +
-          `${stats.totalCalories} / ${stats.dailyGoal} kkal`,
+          `${stats.totalCalories} / ${stats.dailyGoal} kkal` +
+          gamLine,
         { parse_mode: "Markdown" },
       );
       await ctx.answerCallbackQuery("✅ Ovqat tasdiqlandi!");
@@ -382,29 +398,34 @@ async function processFoodInput(
 ) {
   const tgId = ctx.from!.id.toString();
   const user = await userService.findOrCreate(ctx.from!);
+  const lang = (user.language || "uz") as "uz" | "en";
 
   if (!(await checkDailyLimit(ctx, user))) return;
 
+  const statusMessages = {
+    uz: { image: "🔍 Rasmingiz tahlil qilinmoqda...", text: "🧠 Matn tahlil qilinmoqda..." },
+    en: { image: "🔍 Analyzing your image...", text: "🧠 Analyzing text..." },
+  };
+
   const statusMessage = await ctx.reply(
-    type === "image"
-      ? "🔍 Rasmingiz tahlil qilinmoqda..."
-      : "🧠 Matn tahlil qilinmoqda...",
+    statusMessages[lang][type],
   );
 
   try {
     let analysisResult;
 
     if (type === "image") {
-      analysisResult = await openaiService.analyzeFoodImage(data);
+      analysisResult = await openaiService.analyzeFoodImage(data, lang);
     } else {
-      analysisResult = await openaiService.analyzeText(data);
+      analysisResult = await openaiService.analyzeText(data, lang);
     }
 
     if (!analysisResult.success || !analysisResult.data) {
+      const fallbackError = lang === "uz" ? "Tahlil qilib bo'lmadi" : "Analysis failed";
       await ctx.api.editMessageText(
         ctx.chat!.id,
         statusMessage.message_id,
-        analysisResult.error || "Tahlil qilib bo'lmadi",
+        analysisResult.error || fallbackError,
       );
       return;
     }
@@ -431,25 +452,31 @@ async function processFoodInput(
       await user.save();
     }
 
-    // Create Verification Message
+    // Create Verification Message (localized)
     const itemDetails = analysisResult.data.items
-      .map((item) => `- ${item.name}: ${item.calories} kkal`)
+      .map((item) => `- ${item.name}: ${item.calories} ${lang === "uz" ? "kkal" : "kcal"}`)
       .join("\n");
 
+    const resultLabels = {
+      uz: { detected: "Ovqat aniqlandi:", contents: "Tarkibi:", total: "Jami:", confirm: "To'g'rimi?", correct: "To'g'ri", edit: "Tahrirlash", unit: "kkal" },
+      en: { detected: "Food detected:", contents: "Contents:", total: "Total:", confirm: "Is this correct?", correct: "Correct", edit: "Edit", unit: "kcal" },
+    };
+    const lbl = resultLabels[lang];
+
     const messageText =
-      `🍱 **Ovqat aniqlandi:**\n\n` +
-      `**Tarkibi:**\n${itemDetails}\n\n` +
-      `**Jami:**\n` +
-      `🔥 ${Math.round(analysisResult.data.totalCalories)} kkal\n` +
+      `🍱 **${lbl.detected}**\n\n` +
+      `**${lbl.contents}**\n${itemDetails}\n\n` +
+      `**${lbl.total}**\n` +
+      `🔥 ${Math.round(analysisResult.data.totalCalories)} ${lbl.unit}\n` +
       `🥩 P: ${Math.round(analysisResult.data.totalProtein)}g | ` +
       `🍞 U: ${Math.round(analysisResult.data.totalCarbs)}g | ` +
       `🧈 Y: ${Math.round(analysisResult.data.totalFats)}g\n\n` +
-      `To'g'rimi?`;
+      lbl.confirm;
 
     const keyboard = new InlineKeyboard()
-      .text("✅ To'g'ri", `confirm_meal:${meal._id}`)
+      .text(`✅ ${lbl.correct}`, `confirm_meal:${meal._id}`)
       .webApp(
-        "✏️ Tahrirlash",
+        `✏️ ${lbl.edit}`,
         `${process.env.MINI_APP_URL}?start_param=edit_meal_${meal._id}`,
       );
 
@@ -464,13 +491,28 @@ async function processFoodInput(
     );
   } catch (error) {
     console.error("Error in processFoodInput:", error);
+    const errorMsg = lang === "uz"
+      ? "⚠️ Tahlil qilib bo'lmadi. Iltimos, qayta urinib ko'ring."
+      : "⚠️ Analysis failed. Please try again.";
     await ctx.api.editMessageText(
       ctx.chat!.id,
       statusMessage.message_id,
-      "⚠️ Tahlil qilib bo'lmadi. Iltimos, qayta urinib ko'ring.",
+      errorMsg,
     );
   }
 }
+
+/**
+ * Handle /progress command
+ */
+bot.command("progress", async (ctx: Context) => {
+  const user = await userService.findOrCreate(ctx.from!);
+  const lang = user.language || "uz";
+  const msg = lang === "uz"
+    ? "📸 Progress rasmingizni yuboring!\n\nRasm yuboring va sarlavhaga \"progress\" deb yozing."
+    : "📸 Send your progress photo!\n\nSend a photo with the caption \"progress\".";
+  await ctx.reply(msg);
+});
 
 /**
  * Handle photo messages
@@ -479,6 +521,29 @@ bot.on("message:photo", async (ctx: Context) => {
   const photos = ctx.message?.photo;
   if (!photos || photos.length === 0) return;
 
+  const caption = ctx.message?.caption?.toLowerCase() || "";
+
+  // Progress photo handling
+  if (caption.includes("progress") || caption.includes("/progress")) {
+    const photo = photos[photos.length - 1];
+    const file = await ctx.api.getFile(photo.file_id);
+    const fileUrl = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${file.file_path}`;
+
+    const tgId = ctx.from!.id.toString();
+    const user = await userService.findOrCreate(ctx.from!);
+    const lang = user.language || "uz";
+
+    const { default: progressPhotoService } = await import("../services/progressphoto.service.js");
+    await progressPhotoService.savePhoto(tgId, fileUrl, caption);
+
+    const successMsg = lang === "uz"
+      ? "✅ Progress rasmingiz saqlandi! Mini-appda ko'rishingiz mumkin."
+      : "✅ Progress photo saved! View it in the mini-app.";
+    await ctx.reply(successMsg);
+    return;
+  }
+
+  // Food photo handling
   const photo = photos[photos.length - 1];
   const file = await ctx.api.getFile(photo.file_id);
   const fileUrl = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${file.file_path}`;
@@ -496,7 +561,16 @@ bot.on("message:voice", async (ctx: Context) => {
   const voice = ctx.message?.voice;
   if (!voice) return;
 
-  const statusMessage = await ctx.reply("🎤 Eshitilmoqda...");
+  const user = await userService.findOrCreate(ctx.from!);
+  const lang = (user.language || "uz") as "uz" | "en";
+
+  const voiceLabels = {
+    uz: { listening: "🎤 Eshitilmoqda...", youSaid: "🗣️ Siz aytdingiz:", failed: "⚠️ Ovozli xabarni tushunib bo'lmadi. Qayta urinib ko'ring.", error: "⚠️ Ovozli xabarni qayta ishlashda xatolik." },
+    en: { listening: "🎤 Listening...", youSaid: "🗣️ You said:", failed: "⚠️ Could not understand the voice message. Please try again.", error: "⚠️ Error processing voice message." },
+  };
+  const lbl = voiceLabels[lang];
+
+  const statusMessage = await ctx.reply(lbl.listening);
 
   try {
     const file = await ctx.api.getFile(voice.file_id);
@@ -508,20 +582,18 @@ bot.on("message:voice", async (ctx: Context) => {
     await ctx.api.deleteMessage(ctx.chat!.id, statusMessage.message_id);
 
     if (!transcribedText) {
-      await ctx.reply(
-        "⚠️ Ovozli xabarni tushunib bo'lmadi. Qayta urinib ko'ring.",
-      );
+      await ctx.reply(lbl.failed);
       return;
     }
 
-    await ctx.reply(`🗣️ Siz aytdingiz: "${transcribedText}"`);
+    await ctx.reply(`${lbl.youSaid} "${transcribedText}"`);
     await processFoodInput(ctx, "text", transcribedText);
   } catch (error) {
     console.error("Error processing voice:", error);
     await ctx.api.editMessageText(
       ctx.chat!.id,
       statusMessage.message_id,
-      "⚠️ Ovozli xabarni qayta ishlashda xatolik.",
+      lbl.error,
     );
   }
 });

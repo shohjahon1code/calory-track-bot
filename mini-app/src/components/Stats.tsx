@@ -29,7 +29,8 @@ import telegramService from "../utils/telegram";
 import apiService from "../services/api";
 import WeightModal from "./WeightModal";
 import LoadingSkeleton from "./LoadingSkeleton";
-import { Meal, AIProgressAnalysis } from "../types";
+import { Meal, AIProgressAnalysis, ProgressPhoto } from "../types";
+import ProgressPhotos from "./ProgressPhotos";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 
@@ -59,6 +60,8 @@ const Stats: React.FC = () => {
   const [refreshingAnalysis, setRefreshingAnalysis] = useState(false);
   const [userGoal, setUserGoal] = useState<string>("");
   const [startWeight, setStartWeight] = useState(0);
+  const [progressPhotos, setProgressPhotos] = useState<ProgressPhoto[]>([]);
+  const [photoComparison, setPhotoComparison] = useState<{ before: ProgressPhoto; after: ProgressPhoto } | null>(null);
 
   const fetchStats = async () => {
     try {
@@ -114,6 +117,18 @@ const Stats: React.FC = () => {
           )
         : 0;
       setDailyAvgCalories(avg);
+
+      // Fetch progress photos (non-blocking)
+      try {
+        const [photos, comp] = await Promise.all([
+          apiService.getProgressPhotos(tgId),
+          apiService.getPhotoComparison(tgId),
+        ]);
+        setProgressPhotos(photos);
+        setPhotoComparison(comp);
+      } catch {
+        // Photos are optional
+      }
 
       // Fetch AI progress analysis (non-blocking)
       try {
@@ -349,6 +364,15 @@ const Stats: React.FC = () => {
               </ComposedChart>
             </ResponsiveContainer>
           </div>
+        </motion.div>
+
+        {/* Progress Photos */}
+        <motion.div variants={itemVariants}>
+          <ProgressPhotos
+            photos={progressPhotos}
+            comparison={photoComparison}
+            onRefresh={fetchStats}
+          />
         </motion.div>
 
         {/* Smart Analytics Cards Grid */}

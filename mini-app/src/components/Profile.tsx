@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import telegramService from "../utils/telegram";
 import apiService from "../services/api";
-import { User } from "../types";
+import { User, GamificationProfile, ReminderSettings } from "../types";
 import {
   ChevronRight,
   User as UserIcon,
@@ -13,12 +13,20 @@ import {
   LogOut,
   AlertCircle,
   Languages,
+  Trophy,
 } from "lucide-react";
 import LoadingSkeleton from "./LoadingSkeleton";
+import XPProgressBar from "./XPProgressBar";
+import BadgeGrid from "./BadgeGrid";
+import ReminderRow from "./ReminderRow";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 
-const Profile: React.FC = () => {
+interface ProfileProps {
+  onTabChange?: (tab: string) => void;
+}
+
+const Profile: React.FC<ProfileProps> = ({ onTabChange: _onTabChange }) => {
   const { t, i18n } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
@@ -31,6 +39,8 @@ const Profile: React.FC = () => {
     units: "metric",
     goal: "maintain",
   });
+  const [gamification, setGamification] = useState<GamificationProfile | null>(null);
+  const [reminders, setReminders] = useState<ReminderSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeDelete, setActiveDelete] = useState(false);
@@ -40,8 +50,14 @@ const Profile: React.FC = () => {
       try {
         const tgId = telegramService.getUserId();
         if (tgId) {
-          const userData = await apiService.getUser(tgId);
+          const [userData, gamificationData, reminderData] = await Promise.all([
+            apiService.getUser(tgId),
+            apiService.getGamification(tgId).catch(() => null),
+            apiService.getReminders(tgId).catch(() => null),
+          ]);
           setUser(userData);
+          if (gamificationData) setGamification(gamificationData);
+          if (reminderData) setReminders(reminderData);
           setFormData({
             weight: userData.weight?.toString() || "",
             height: userData.height?.toString() || "",
@@ -193,6 +209,42 @@ const Profile: React.FC = () => {
         </motion.div>
       </div>
 
+      {/* Achievements Section */}
+      {gamification && (
+        <div className="px-4 mb-2">
+          <SectionTitle title={t("gamification.badges")} />
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden p-4 space-y-4"
+          >
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-xl gradient-warm flex items-center justify-center shadow-sm">
+                <Trophy size={20} className="text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-slate-800">
+                  {t("gamification.level", { level: gamification.level })}
+                </p>
+                <p className="text-[10px] text-slate-400 font-medium">
+                  {t("gamification.longestStreak", { count: gamification.longestStreak })}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-black text-amber-500">{gamification.xp} XP</p>
+              </div>
+            </div>
+            <XPProgressBar
+              xp={gamification.xp}
+              level={gamification.level}
+              xpToNextLevel={gamification.xpToNextLevel}
+              xpForCurrentLevel={gamification.xpForCurrentLevel}
+            />
+            <BadgeGrid unlockedBadges={gamification.badges} />
+          </motion.div>
+        </div>
+      )}
+
       <div className="px-4">
         <SectionTitle title={t("profile.personalInfo")} />
         <motion.div
@@ -318,6 +370,39 @@ const Profile: React.FC = () => {
               </span>
             </div>
           </SettingRow>
+        </motion.div>
+
+        {/* Reminders Section */}
+        <SectionTitle title={t("reminders.title")} />
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"
+        >
+          {(["breakfast", "lunch", "dinner", "streakReminder", "dailyReport"] as const).map((key) => {
+            const setting = reminders?.[key] || { enabled: false, time: "08:00" };
+            return (
+              <ReminderRow
+                key={key}
+                label={t(`reminders.${key}`)}
+                enabled={setting.enabled}
+                time={setting.time}
+                onToggle={(enabled) => {
+                  const updated = { ...reminders, [key]: { ...setting, enabled } } as ReminderSettings;
+                  setReminders(updated);
+                  const tgId = telegramService.getUserId();
+                  if (tgId) apiService.updateReminders(tgId, { [key]: { ...setting, enabled } }).catch(() => {});
+                }}
+                onTimeChange={(time) => {
+                  const updated = { ...reminders, [key]: { ...setting, time } } as ReminderSettings;
+                  setReminders(updated);
+                  const tgId = telegramService.getUserId();
+                  if (tgId) apiService.updateReminders(tgId, { [key]: { ...setting, time } }).catch(() => {});
+                }}
+              />
+            );
+          })}
         </motion.div>
 
         <div className="mt-8 mb-4">

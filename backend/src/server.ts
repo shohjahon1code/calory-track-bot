@@ -7,6 +7,12 @@ import userRoutes from "./routes/user.routes.js";
 import mealRoutes from "./routes/meal.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import subscriptionRoutes from "./routes/subscription.routes.js";
+import mealPlanRoutes from "./routes/mealplan.routes.js";
+import socialRoutes from "./routes/social.routes.js";
+import reminderService from "./services/reminder.service.js";
+import recipeRoutes from "./routes/recipe.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
+import progressPhotoRoutes from "./routes/progressphoto.routes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,6 +43,11 @@ app.use("/api/user", userRoutes);
 app.use("/api/meals", mealRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/subscription", subscriptionRoutes);
+app.use("/api/meal-plan", mealPlanRoutes);
+app.use("/api/social", socialRoutes);
+app.use("/api/recipes", recipeRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/progress-photos", progressPhotoRoutes);
 
 // Error handling middleware
 app.use(
@@ -71,6 +82,10 @@ async function startServer() {
         console.log(`✅ Telegram bot started as @${botInfo.username}`);
       },
     });
+
+    // Start reminder service
+    reminderService.init(bot);
+    reminderService.start();
   } catch (error) {
     console.error("❌ Failed to start server:", error);
     process.exit(1);
@@ -80,6 +95,7 @@ async function startServer() {
 // Graceful shutdown
 process.on("SIGINT", async () => {
   console.log("\n🛑 Shutting down gracefully...");
+  reminderService.stop();
   await bot.stop();
   await database.disconnect();
   process.exit(0);
@@ -87,6 +103,7 @@ process.on("SIGINT", async () => {
 
 process.on("SIGTERM", async () => {
   console.log("\n🛑 Shutting down gracefully...");
+  reminderService.stop();
   await bot.stop();
   await database.disconnect();
   process.exit(0);

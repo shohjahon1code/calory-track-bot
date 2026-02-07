@@ -1,6 +1,7 @@
 import Meal, { IMealDocument } from "../models/Meal.js";
-import { NutritionData, DailyStats } from "../types/index.js";
+import { NutritionData, DailyStats, GamificationResult } from "../types/index.js";
 import { ERROR_MESSAGES } from "../config/constants.js";
+import gamificationService from "./gamification.service.js";
 
 class MealService {
   /**
@@ -43,14 +44,20 @@ class MealService {
   async confirmMeal(
     mealId: string,
     tgId: string,
-  ): Promise<IMealDocument | null> {
+  ): Promise<{ meal: IMealDocument | null; gamification?: GamificationResult }> {
     try {
       const meal = await Meal.findOneAndUpdate(
         { _id: mealId, tgId },
         { status: "confirmed" },
         { new: true },
       );
-      return meal;
+
+      if (!meal) return { meal: null };
+
+      // Trigger gamification
+      const gamification = await gamificationService.onMealConfirmed(tgId);
+
+      return { meal, gamification };
     } catch (error) {
       console.error("Error in confirmMeal:", error);
       throw new Error(ERROR_MESSAGES.DATABASE_ERROR);
