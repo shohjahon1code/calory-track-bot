@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import telegramService from "../utils/telegram";
 import apiService from "../services/api";
-import { User, DailyStats, Meal, GamificationProfile, Badge, DailyReportCard } from "../types";
+import { User, DailyStats, Meal, GamificationProfile, Badge, DailyReportCard, MoodEntry } from "../types";
+import MoodCard from "./MoodCard";
 import GoalSetting from "./GoalSetting";
 import Wizard from "./Wizard/Wizard";
 import LoadingSkeleton from "./LoadingSkeleton";
@@ -101,19 +102,21 @@ const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
   const [loading, setLoading] = useState(true);
   const [showGoalSetting, setShowGoalSetting] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
+  const [todayMood, setTodayMood] = useState<MoodEntry | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
       const tgId = telegramService.getUserId();
       if (!tgId) return;
 
-      const [userData, statsData, mealsData, gamificationData, subData, reportData] = await Promise.all([
+      const [userData, statsData, mealsData, gamificationData, subData, reportData, moodData] = await Promise.all([
         apiService.getUser(tgId),
         apiService.getTodayStats(tgId),
         apiService.getTodayMeals(tgId),
         apiService.getGamification(tgId).catch(() => null),
         apiService.getSubscription(tgId).catch(() => null),
         apiService.getReportCard(tgId).catch(() => null),
+        apiService.getTodayMood(tgId).catch(() => null),
       ]);
 
       setUser(userData);
@@ -121,6 +124,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
       setMeals(mealsData);
       setIsPremium(subData?.isPremium || false);
       setReportCard(reportData);
+      setTodayMood(moodData);
 
       if (gamificationData) {
         setGamification(gamificationData);
@@ -515,6 +519,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onTabChange }) => {
             )}
           </AnimatePresence>
         </div>
+      </div>
+
+      {/* Mood Check-in */}
+      <div className="px-4">
+        <MoodCard
+          existingMood={todayMood}
+          onMoodLogged={() => {
+            const tgId = telegramService.getUserId();
+            if (tgId) {
+              apiService.getTodayMood(tgId).then(setTodayMood).catch(() => {});
+            }
+          }}
+        />
       </div>
 
       {/* Daily Report Card Preview */}

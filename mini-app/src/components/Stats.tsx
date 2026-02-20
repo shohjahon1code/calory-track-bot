@@ -31,6 +31,7 @@ import WeightModal from "./WeightModal";
 import LoadingSkeleton from "./LoadingSkeleton";
 import { Meal, AIProgressAnalysis, ProgressPhoto } from "../types";
 import ProgressPhotos from "./ProgressPhotos";
+import MoodTrend from "./MoodTrend";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 
@@ -62,6 +63,7 @@ const Stats: React.FC = () => {
   const [startWeight, setStartWeight] = useState(0);
   const [progressPhotos, setProgressPhotos] = useState<ProgressPhoto[]>([]);
   const [photoComparison, setPhotoComparison] = useState<{ before: ProgressPhoto; after: ProgressPhoto } | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
 
   const fetchStats = async () => {
     try {
@@ -117,6 +119,14 @@ const Stats: React.FC = () => {
           )
         : 0;
       setDailyAvgCalories(avg);
+
+      // Fetch subscription status (non-blocking)
+      try {
+        const subData = await apiService.getSubscription(tgId);
+        setIsPremium(subData?.isPremium || false);
+      } catch {
+        // Optional
+      }
 
       // Fetch progress photos (non-blocking)
       try {
@@ -373,6 +383,11 @@ const Stats: React.FC = () => {
             comparison={photoComparison}
             onRefresh={fetchStats}
           />
+        </motion.div>
+
+        {/* Mood Trend */}
+        <motion.div variants={itemVariants}>
+          <MoodTrend isPremium={isPremium} />
         </motion.div>
 
         {/* Smart Analytics Cards Grid */}

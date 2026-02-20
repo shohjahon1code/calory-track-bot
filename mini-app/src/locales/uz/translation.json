@@ -310,5 +310,35 @@
     "deleteConfirm": "Bu progress rasmni o'chirasizmi?",
     "photoSaved": "Progress rasmi saqlandi!",
     "sendPhotoHint": "Botga \"progress\" sarlavhali rasm yuboring"
+  },
+  "mood": {
+    "howFeeling": "Kayfiyatingiz qanday?",
+    "todaysMood": "Bugungi kayfiyat",
+    "great": "Ajoyib",
+    "good": "Yaxshi",
+    "normal": "Oddiy",
+    "bad": "Yomon",
+    "terrible": "Juda yomon",
+    "whatTriggered": "Nimadan ta'sirlanyapsiz?",
+    "notePlaceholder": "Izoh qo'shing (ixtiyoriy)...",
+    "weeklyTrend": "Kayfiyat trendi",
+    "getInsight": "AI tahlilini olish",
+    "aiInsight": "AI Kayfiyat Tahlili",
+    "unlockInsight": "AI kayfiyat tahlilini ochish",
+    "upgradePrompt": "Kayfiyat tahlili uchun PRO ga o'ting",
+    "saved": "Saqlandi!",
+    "triggers": {
+      "stress": "Stress",
+      "tired": "Charchagan",
+      "happy": "Xursand",
+      "energetic": "Baquvvat",
+      "hungry": "Och",
+      "anxious": "Xavotirli",
+      "relaxed": "Tinch",
+      "sick": "Kasal",
+      "exercise": "Mashq",
+      "sleepWell": "Yaxshi uxladi",
+      "sleepBad": "Yomon uxladi"
+    }
   }
 }

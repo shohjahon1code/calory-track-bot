@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { User, Meal, DailyStats, AIProgressAnalysis, GamificationProfile, ReminderSettings, DailyReportCard, ChatMessage, ProgressPhoto } from "../types";
+import { User, Meal, DailyStats, AIProgressAnalysis, GamificationProfile, ReminderSettings, DailyReportCard, ChatMessage, ProgressPhoto, MoodEntry, MoodLevel, MoodTrigger, MoodWeeklyAnalysis } from "../types";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:3000/api";
@@ -332,6 +332,28 @@ class ApiService {
 
   async deleteProgressPhoto(photoId: string, tgId: string): Promise<void> {
     await this.client.delete(`/progress-photos/${photoId}?tgId=${tgId}`);
+  }
+
+  // ── Mood Journal ──
+
+  async logMood(tgId: string, mood: MoodLevel, triggers: MoodTrigger[], note: string): Promise<{ success: boolean; data?: MoodEntry }> {
+    const response = await this.client.post(`/mood/${tgId}`, { mood, triggers, note });
+    return response.data;
+  }
+
+  async getTodayMood(tgId: string): Promise<MoodEntry | null> {
+    const response = await this.client.get<MoodEntry | null>(`/mood/${tgId}/today`);
+    return response.data;
+  }
+
+  async getRecentMoods(tgId: string, days: number = 7): Promise<MoodEntry[]> {
+    const response = await this.client.get<MoodEntry[]>(`/mood/${tgId}/recent?days=${days}`);
+    return response.data;
+  }
+
+  async getMoodAnalysis(tgId: string, language: string): Promise<{ success: boolean; data?: MoodWeeklyAnalysis; isPremium: boolean; error?: string }> {
+    const response = await this.client.get(`/mood/${tgId}/analysis?language=${language}`);
+    return response.data;
   }
 }
 

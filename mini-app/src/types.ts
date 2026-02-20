@@ -137,3 +137,40 @@ export interface ProgressPhoto {
   note?: string;
   takenAt: string;
 }
+
+// ── Mood Journal ──
+
+export type MoodLevel = 1 | 2 | 3 | 4 | 5;
+
+export type MoodTrigger =
+  | "stress"
+  | "tired"
+  | "happy"
+  | "energetic"
+  | "hungry"
+  | "anxious"
+  | "relaxed"
+  | "sick"
+  | "exercise"
+  | "sleep_well"
+  | "sleep_bad";
+
+export interface MoodEntry {
+  _id: string;
+  tgId: string;
+  mood: MoodLevel;
+  triggers: MoodTrigger[];
+  note: string;
+  date: string;
+  createdAt: string;
+}
+
+export interface MoodWeeklyAnalysis {
+  moodTrend: string;
+  averageMood: number;
+  moodCalorieCorrelation: string;
+  topTriggers: string[];
+  patterns: string[];
+  advice: string[];
+  summary: string;
+}

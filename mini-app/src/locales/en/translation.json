@@ -310,5 +310,35 @@
     "deleteConfirm": "Delete this progress photo?",
     "photoSaved": "Progress photo saved!",
     "sendPhotoHint": "Send a photo with caption \"progress\" to the bot"
+  },
+  "mood": {
+    "howFeeling": "How are you feeling?",
+    "todaysMood": "Today's Mood",
+    "great": "Great",
+    "good": "Good",
+    "normal": "Normal",
+    "bad": "Bad",
+    "terrible": "Terrible",
+    "whatTriggered": "What's affecting you?",
+    "notePlaceholder": "Add a note (optional)...",
+    "weeklyTrend": "Mood Trend",
+    "getInsight": "Get AI Insight",
+    "aiInsight": "AI Mood Analysis",
+    "unlockInsight": "Unlock AI Mood Insights",
+    "upgradePrompt": "Upgrade to PRO for mood analysis",
+    "saved": "Saved!",
+    "triggers": {
+      "stress": "Stress",
+      "tired": "Tired",
+      "happy": "Happy",
+      "energetic": "Energetic",
+      "hungry": "Hungry",
+      "anxious": "Anxious",
+      "relaxed": "Relaxed",
+      "sick": "Sick",
+      "exercise": "Exercise",
+      "sleepWell": "Slept Well",
+      "sleepBad": "Slept Bad"
+    }
   }
 }
