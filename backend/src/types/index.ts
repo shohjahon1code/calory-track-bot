@@ -277,3 +277,38 @@ export interface IRecipe {
   tags: string[];
   source: "ai" | "curated";
 }
+
+// ── Mood Journal ──
+
+export type MoodLevel = 1 | 2 | 3 | 4 | 5;
+
+export type MoodTrigger =
+  | "stress"
+  | "tired"
+  | "happy"
+  | "energetic"
+  | "hungry"
+  | "anxious"
+  | "relaxed"
+  | "sick"
+  | "exercise"
+  | "sleep_well"
+  | "sleep_bad";
+
+export interface IMoodEntry {
+  tgId: string;
+  mood: MoodLevel;
+  triggers: MoodTrigger[];
+  note: string;
+  date: string;
+}
+
+export interface MoodWeeklyAnalysis {
+  moodTrend: string;
+  averageMood: number;
+  moodCalorieCorrelation: string;
+  topTriggers: string[];
+  patterns: string[];
+  advice: string[];
+  summary: string;
+}

@@ -13,6 +13,7 @@ import reminderService from "./services/reminder.service.js";
 import recipeRoutes from "./routes/recipe.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import progressPhotoRoutes from "./routes/progressphoto.routes.js";
+import moodRoutes from "./routes/mood.routes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -48,6 +49,7 @@ app.use("/api/social", socialRoutes);
 app.use("/api/recipes", recipeRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/progress-photos", progressPhotoRoutes);
+app.use("/api/mood", moodRoutes);
 
 // Error handling middleware
 app.use(
